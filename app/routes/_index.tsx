@@ -1,4 +1,11 @@
-import type { MetaFunction } from "@remix-run/node";
+import {
+  json,
+  redirect,
+  type MetaFunction,
+  LoaderFunctionArgs,
+} from "@remix-run/node";
+import { TEST_TYPE, getUser } from "~/auth/user";
+import { formatLoaderReturnData } from "~/utils/loaderFunctions";
 
 export const meta: MetaFunction = () => {
   return [
@@ -7,35 +14,34 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+export async function loader({ request }: LoaderFunctionArgs) {
+  //   const { user, sessionHeader } = await getUser(request);
+  //   const { user, sessionHeader } = await getUser(request, "NONE");
+  const { user, sessionHeader } = await getUser(request, TEST_TYPE);
+  //   const { user, sessionHeader } = await getUser(request, "DONE");
+  let forceRedirectPath: string | undefined;
+
+  if (user) {
+    if (!user.verifyEmail) {
+      forceRedirectPath = "/verify";
+    } else if (!user.connected) {
+      forceRedirectPath = "/connect";
+    } else {
+      forceRedirectPath = "/dash";
+    }
+  } else {
+    const returnData = formatLoaderReturnData({ data: undefined });
+
+    return json(returnData, {
+      headers: sessionHeader,
+    });
+  }
+
+  return redirect(forceRedirectPath, {
+    headers: sessionHeader,
+  });
+}
+
 export default function Index() {
-  return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8" }}>
-      <h1>Welcome to Remix</h1>
-      <ul>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/blog"
-            rel="noreferrer"
-          >
-            15m Quickstart Blog Tutorial
-          </a>
-        </li>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/jokes"
-            rel="noreferrer"
-          >
-            Deep Dive Jokes App Tutorial
-          </a>
-        </li>
-        <li>
-          <a target="_blank" href="https://remix.run/docs" rel="noreferrer">
-            Remix Docs
-          </a>
-        </li>
-      </ul>
-    </div>
-  );
+  return <div>HOME, FUCK YEAH!</div>;
 }
